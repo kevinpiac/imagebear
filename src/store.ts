@@ -10,3 +10,12 @@ export const regionStore = writable<Region[]>([
     points: [],
   },
 ]);
+
+export const resetRegions = () => {
+  regionStore.set([
+    {
+      id: crypto.randomUUID(),
+      points: [],
+    },
+  ]);
+};

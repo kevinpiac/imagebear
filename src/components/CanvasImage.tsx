@@ -5,11 +5,12 @@ import { FC, useEffect, useRef, useState } from "react";
 import { Image, Layer, Line, Stage } from "react-konva";
 import React from "react";
 import { useWritable } from "react-use-svelte-store";
-import { Region, regionStore } from "@/store";
+import { Region, regionStore, resetRegions } from "@/store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Konva from "konva";
 import { generateImage } from "@/app/actions";
+import { rejects } from "assert";
 
 type CanvasImageProps = {
   src: string;
@@ -28,9 +29,39 @@ function getRelativePointerPosition(node) {
   return transform.point(pos);
 }
 
+function loadImage(url: string) {
+  return new Promise((resolve, reject) => {
+    if (!url) return resolve(null);
+
+    let img = document.createElement("img");
+
+    function onload() {
+      return resolve(img);
+    }
+
+    function onerror() {
+      return reject();
+    }
+
+    img.addEventListener("load", onload);
+    img.addEventListener("error", onerror);
+
+    img.src = url;
+
+    return function cleanup() {
+      img.removeEventListener("load", onload);
+      img.removeEventListener("error", onerror);
+    };
+  });
+}
+
 export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  useEffect(() => {
+    if (src) {
+      setNewImage(src);
+    }
+  }, [src]);
+
   const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   const [inputValue, setInputValue] = useState<string>("");
@@ -38,7 +69,16 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
 
   const [exported, setExported] = useState(false);
 
-  const [image] = useImage(src);
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    if (dataUrl) {
+      loadImage(dataUrl).then((img) => {
+        console.log("img", img);
+        setImage(img);
+      });
+    }
+  }, [dataUrl]);
 
   const stageRef = useRef();
   const imageRef = useRef();
@@ -47,6 +87,30 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
   const initialId = crypto.randomUUID();
 
   const [regions, setRegions] = useWritable<Region[]>(regionStore);
+
+  const [history, setHistory] = useState<string[]>([]);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const pushHistory = (url: string) => {
+    setHistory(history.concat([url]));
+  };
+
+  const undo = () => {
+    const last = history[history.length - 1];
+
+    if (last) {
+      const newHistory = history.slice(0, history.length - 1);
+      setHistory(newHistory);
+      setDataUrl(newHistory[newHistory.length - 1]);
+    }
+  };
+
+  const setNewImage = (url: string) => {
+    setDataUrl(url);
+    pushHistory(url);
+    resetRegions();
+  };
 
   const [selectedId, setSelectedId] = useState<string>(initialId);
   const [imageProps, setImageProps] = useState<{
@@ -60,6 +124,13 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
     width: 0,
     height: 0,
   });
+
+  const resetInput = () => {
+    if (inputRef.current) {
+      inputRef.current.value = "";
+      setInputValue("");
+    }
+  };
 
   useEffect(() => {
     if (image && stageRef.current) {
@@ -101,6 +172,7 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
 
   const handleExport = async () => {
     setIsLoading(true);
+    resetInput();
     const stage = imageRef.current;
 
     // Create a new temporary stage
@@ -168,7 +240,7 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
 
     const genImage = await generateImage(imageUrl!, maskUrl, inputValue);
     console.log("genImage", genImage);
-    setExported(genImage);
+    setNewImage(genImage);
     setIsLoading(false);
   };
 
@@ -221,6 +293,8 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
                   }
                 }}
               ></Image>
+            </Layer>
+            <Layer>
               {regions.map((region) => {
                 const isSelected = region.id === selectedId;
                 return (
@@ -237,12 +311,11 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
                     {/* then we just draw new region */}
                     <Line
                       name="region"
-                      fill={"black"}
-                      globalCompositeOperation={"destination-out"}
+                      fill={"#ff0e0e"}
+                      globalCompositeOperation={"source-over"}
                       points={region.points.flatMap((p) => [p.x, p.y])}
-                      // fill={region.color}
                       closed
-                      opacity={1}
+                      opacity={0.5}
                     />
                   </React.Fragment>
                 );
@@ -251,9 +324,13 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
           </Stage>
         </div>
         <Input
+          ref={inputRef}
           placeholder={"Enter prompt"}
           onChange={(e) => setInputValue(e.target.value)}
         />
+        <Button size={"sm"} onClick={undo}>
+          Undo
+        </Button>
         <Button isLoading={isLoading} onClick={handleExport}>
           Generate
         </Button>

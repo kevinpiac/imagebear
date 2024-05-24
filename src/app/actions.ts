@@ -69,7 +69,7 @@ export async function generateImage(
   const formData = new FormData();
   formData.append("init_image", imageBlob, "init_image.png");
   formData.append("mask_image", maskBlob, "mask_image.png");
-  formData.append("model", "absolute_reality_1_8_1_inpaint");
+  formData.append("model", "absolute_reality_1_8_1_inpaint"); // icbinp
   formData.append("format", "png");
   formData.append("prompt", prompt);
 
