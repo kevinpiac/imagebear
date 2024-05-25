@@ -3,14 +3,10 @@
 import Dropzone from "react-dropzone";
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Stage, Group, Image, Text, Layer, Line } from "react-konva";
+import { Stage } from "react-konva";
 import { CanvasImage } from "@/components/CanvasImage";
-import { generateImage } from "@/app/actions";
-import { Input } from "@/components/ui/input";
-import Konva from "konva";
 import { useWritable } from "react-use-svelte-store";
 import { Region, regionStore } from "@/store";
-import useImage from "use-image";
 
 function getRelativePointerPosition(node) {
   // the function will return pointer position relative to the passed node

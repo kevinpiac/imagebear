@@ -69,13 +69,47 @@ export async function generateImage(
   const formData = new FormData();
   formData.append("init_image", imageBlob, "init_image.png");
   formData.append("mask_image", maskBlob, "mask_image.png");
-  formData.append("model", "absolute_reality_1_8_1_inpaint"); // icbinp
+  formData.append("model", "absolute_reality_1_8_1_inpaint");
+  // formData.append("model", "icbinp_seco_inpaint");
   formData.append("format", "png");
   formData.append("prompt", prompt);
 
   try {
     const result = await axios.post(
       "https://api.dezgo.com/inpainting",
+      formData,
+      {
+        responseType: "arraybuffer",
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "X-Dezgo-Key": process.env.DEZGO_API_KEY,
+        },
+      },
+    );
+
+    const resultBuffer = Buffer.from(result.data, "binary");
+
+    const url = bufferToDataURL(resultBuffer);
+    console.log("url", url);
+    return url;
+  } catch (e) {
+    console.log(e);
+    return null;
+  }
+}
+
+export async function removeBackground(imageUrl: string) {
+  // Convert DataURL to Blob
+  const imageBlob = await dataURLToBlob(imageUrl);
+
+  // Create a FormData object
+  const formData = new FormData();
+  formData.append("image", imageBlob, "init_image.png");
+  formData.append("mode", "transparent");
+
+  try {
+    const result = await axios.post(
+      "https://api.dezgo.com/remove-background",
       formData,
       {
         responseType: "arraybuffer",

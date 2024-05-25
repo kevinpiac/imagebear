@@ -2,15 +2,17 @@
 
 import useImage from "use-image";
 import { FC, useEffect, useRef, useState } from "react";
-import { Image, Layer, Line, Stage } from "react-konva";
+import { Image, Layer, Line, Stage, Rect, Group } from "react-konva";
 import React from "react";
 import { useWritable } from "react-use-svelte-store";
 import { Region, regionStore, resetRegions } from "@/store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Konva from "konva";
-import { generateImage } from "@/app/actions";
+import { generateImage, removeBackground } from "@/app/actions";
 import { rejects } from "assert";
+import { ColorSelector } from "@/components/ColorSelector";
+import { BgColor } from "@/lib/backgrounds";
 
 type CanvasImageProps = {
   src: string;
@@ -70,6 +72,7 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
   const [exported, setExported] = useState(false);
 
   const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const bgLayerRef = useRef<Konva.Layer>(null);
 
   useEffect(() => {
     if (dataUrl) {
@@ -80,7 +83,7 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
     }
   }, [dataUrl]);
 
-  const stageRef = useRef();
+  const stageRef = useRef<Konva.Stage>();
   const imageRef = useRef();
   const [isDrawing, setIsDrawing] = useState(false);
 
@@ -104,6 +107,11 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
       setHistory(newHistory);
       setDataUrl(newHistory[newHistory.length - 1]);
     }
+  };
+
+  const removeBg = async () => {
+    const image = await removeBackground(dataUrl);
+    setNewImage(image);
   };
 
   const setNewImage = (url: string) => {
@@ -225,23 +233,73 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
     // Export the temporary stage to a data URL
     const maskUrl = tempStage.toDataURL({
       mimeType: "image/png",
-      pixelRatio: 1,
-      quality: 0.2,
+      pixelRatio: 2,
+      quality: 1,
     });
 
-    const imageUrl = imageRef.current.toDataURL({
-      mimeType: "image/png",
-      pixelRatio: 1,
-      quality: 0.2,
-    });
+    const imageUrl = await generateImageFromStage();
 
-    // download(maskUrl);
-    // download(imageUrl!);
+    if (!imageUrl) {
+      throw new Error("No image url");
+    }
 
     const genImage = await generateImage(imageUrl!, maskUrl, inputValue);
     console.log("genImage", genImage);
     setNewImage(genImage);
     setIsLoading(false);
+  };
+
+  const downloadImage = async () => {
+    if (!dataUrl) {
+      return;
+    }
+
+    download(dataUrl);
+    const stageImage = await generateImageFromStage();
+    download(stageImage!);
+  };
+
+  const generateImageFromStage = async () => {
+    const stage = stageRef.current;
+
+    if (!stage) {
+      return;
+    }
+
+    const dataUrl = stage.toDataURL({
+      mimeType: "image/png",
+      pixelRatio: 2,
+      quality: 1,
+    });
+
+    return dataUrl;
+  };
+
+  const addBgColor = (color: BgColor) => {
+    let layer = bgLayerRef.current;
+
+    if (!layer) {
+      return;
+    }
+
+    layer.destroyChildren();
+
+    const stage = stageRef.current;
+    const background = new Konva.Rect({
+      x: 0,
+      y: 0,
+      width: stage.width(),
+      height: stage.height(),
+      fillLinearGradientStartPoint: { x: 0, y: 0 },
+      fillLinearGradientEndPoint: { x: stage.width(), y: stage.height() },
+      // gradient into transparent color, so we can see CSS styles
+      fillLinearGradientColorStops: color.konva,
+      // remove background from hit graph for better perf
+      // because we don't need any events on the background
+      listening: false,
+    });
+    layer.add(background);
+    layer.moveToBottom();
   };
 
   return (
@@ -254,6 +312,7 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
         )}
         <div className={"border-2 border-black rounded-sm"}>
           <Stage width={600} height={400} ref={stageRef}>
+            <Layer ref={bgLayerRef}></Layer>
             <Layer>
               <Image
                 image={image}
@@ -330,6 +389,15 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
         />
         <Button size={"sm"} onClick={undo}>
           Undo
+        </Button>
+        <Button size={"sm"} onClick={removeBg}>
+          Remove background
+        </Button>
+
+        <ColorSelector onChange={(color) => addBgColor(color)} />
+
+        <Button size={"sm"} onClick={downloadImage}>
+          Download
         </Button>
         <Button isLoading={isLoading} onClick={handleExport}>
           Generate
