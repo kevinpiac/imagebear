@@ -499,22 +499,6 @@ export default function Home() {
                 <Button variant={"rounded"} onClick={undo}>
                   <ArrowUturnLeftIcon className={"w-4 h-4"} />
                 </Button>
-                <Dropzone
-                  onDrop={(acceptedFiles) => {}}
-                  onDragEnter={() => setIsDragging(true)}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDropRejected={() => setIsDragging(false)}
-                  onDropAccepted={handleFileAdded}
-                >
-                  {({ getRootProps, getInputProps }) => (
-                    <div {...getRootProps()}>
-                      <Button variant={"rounded"}>
-                        <ArrowUp className={"w-4 h-4 mr-2"} />
-                        Upload image
-                      </Button>
-                    </div>
-                  )}
-                </Dropzone>
               </div>
             </main>
             <aside
@@ -522,62 +506,87 @@ export default function Home() {
                 "col-span-3 flex flex-col gap-4 overflow-y-auto max-h-full grow"
               }
             >
+              {!!history?.length && (
+                <FeatureCard title={"Remove backgound"}>
+                  {history.length >= 1 && (
+                    <Button
+                      onClick={removeBg}
+                      variant={"rounded"}
+                      size={"sm"}
+                      isLoading={loadings?.removeBg}
+                    >
+                      <SparklesIcon className={"w-4 h-4 mr-2"} />
+                      Remove background
+                    </Button>
+                  )}
+                  {history.length < 1 && (
+                    <span className={"text-white/80 antialiased text-sm"}>
+                      Upload an image first
+                    </span>
+                  )}
+                </FeatureCard>
+              )}
               {!regions?.length && (
                 <>
-                  <FeatureCard title={"Remove backgound"}>
-                    {history.length >= 1 && (
+                  <div className={"space-y-5"}>
+                    <FeatureCard title={"Add image"}>
+                      <TransparentInput
+                        ref={genImageInputRef}
+                        placeholder={"Elon musk drinking tea, in space"}
+                        onChange={(e) => setGenImageINputValue(e.target.value)}
+                      />
                       <Button
-                        onClick={removeBg}
+                        isLoading={loadings?.generateImage}
+                        disabled={!genImageInputValue?.length}
+                        onClick={() => generateAiImage(genImageInputValue)}
                         variant={"rounded"}
                         size={"sm"}
-                        isLoading={loadings?.removeBg}
+                        className={"mt-2 w-full"}
                       >
                         <SparklesIcon className={"w-4 h-4 mr-2"} />
-                        Remove background
+                        Generate with AI
                       </Button>
-                    )}
-                    {history.length < 1 && (
-                      <span className={"text-white/80 antialiased text-sm"}>
-                        Upload an image first
-                      </span>
-                    )}
-                  </FeatureCard>
-                  <FeatureCard title={"AI Image"}>
-                    <TransparentInput
-                      ref={genImageInputRef}
-                      placeholder={"Sangoku in the desert fighting Buu"}
-                      onChange={(e) => setGenImageINputValue(e.target.value)}
-                    />
-                    <Button
-                      isLoading={loadings?.generateImage}
-                      disabled={!genImageInputValue?.length}
-                      onClick={() => generateAiImage(genImageInputValue)}
-                      variant={"rounded"}
-                      size={"sm"}
-                      className={"mt-2"}
+                    </FeatureCard>
+                    <div className={"flex items-center justify-center gap-3"}>
+                      <div className={"grow h-[1px] bg-gray-800"}></div>
+                      <span className={"text-gray-800 antialiased"}>OR</span>
+                      <div className={"grow h-[1px] bg-gray-800"}></div>
+                    </div>
+                    <Dropzone
+                      onDrop={(acceptedFiles) => {}}
+                      onDragEnter={() => setIsDragging(true)}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDropRejected={() => setIsDragging(false)}
+                      onDropAccepted={handleFileAdded}
                     >
-                      <SparklesIcon className={"w-4 h-4 mr-2"} />
-                      Generate
-                    </Button>
-                  </FeatureCard>
-                  <FeatureCard title={"AI Background"}>
-                    <TransparentInput
-                      ref={genBgInputRef}
-                      placeholder={"Beautiful sunset in the mountains"}
-                      onChange={(e) => setGenBgInputValue(e.target.value)}
-                    />
-                    <Button
-                      isLoading={loadings?.generateBackground}
-                      disabled={!genBgInputValue?.length}
-                      onClick={() => generateAiBackground(genBgInputValue)}
-                      variant={"rounded"}
-                      size={"sm"}
-                      className={"mt-2"}
-                    >
-                      <SparklesIcon className={"w-4 h-4 mr-2"} />
-                      Generate
-                    </Button>
-                  </FeatureCard>
+                      {({ getRootProps, getInputProps }) => (
+                        <div {...getRootProps()}>
+                          <Button variant={"rounded"} className={"w-full"}>
+                            <ArrowUp className={"w-4 h-4 mr-2"} />
+                            Upload image
+                          </Button>
+                        </div>
+                      )}
+                    </Dropzone>
+                  </div>
+                  {/*<FeatureCard title={"AI Background"}>*/}
+                  {/*  <TransparentInput*/}
+                  {/*    ref={genBgInputRef}*/}
+                  {/*    placeholder={"Beautiful sunset in the mountains"}*/}
+                  {/*    onChange={(e) => setGenBgInputValue(e.target.value)}*/}
+                  {/*  />*/}
+                  {/*  <Button*/}
+                  {/*    isLoading={loadings?.generateBackground}*/}
+                  {/*    disabled={!genBgInputValue?.length}*/}
+                  {/*    onClick={() => generateAiBackground(genBgInputValue)}*/}
+                  {/*    variant={"rounded"}*/}
+                  {/*    size={"sm"}*/}
+                  {/*    className={"mt-2"}*/}
+                  {/*  >*/}
+                  {/*    <SparklesIcon className={"w-4 h-4 mr-2"} />*/}
+                  {/*    Generate*/}
+                  {/*  </Button>*/}
+                  {/*</FeatureCard>*/}
                 </>
               )}
 
