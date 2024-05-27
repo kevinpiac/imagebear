@@ -1,6 +1,6 @@
 export const Spinner = () => {
-  const fillColor = "#1f6b40";
-  const ringColor = "#125630";
+  const fillColor = "#092236";
+  const ringColor = "#1d3a59";
 
   return (
     <div className={"mr-3"}>

@@ -13,6 +13,7 @@ import { generateImage, removeBackground } from "@/app/actions";
 import { rejects } from "assert";
 import { ColorSelector } from "@/components/ColorSelector";
 import { BgColor } from "@/lib/backgrounds";
+import { PhotoIcon } from "@heroicons/react/16/solid";
 
 type CanvasImageProps = {
   src: string;
@@ -303,106 +304,126 @@ export const CanvasImage: FC<CanvasImageProps> = ({ src }) => {
   };
 
   return (
-    <div className={`h-screen flex items-center justify-center bg-white`}>
-      <main className={"flex flex-col gap-2 items-center justify-center"}>
-        {exported && (
-          <div className={"border-2 border-black rounded-sm max-w-400"}>
-            <img src={exported} className={"rounded-sm"} />
-          </div>
-        )}
-        <div className={"border-2 border-black rounded-sm"}>
-          <Stage width={600} height={400} ref={stageRef}>
-            <Layer ref={bgLayerRef}></Layer>
-            <Layer>
-              <Image
-                image={image}
-                x={imageProps.x}
-                y={imageProps.y}
-                width={imageProps.width}
-                height={imageProps.height}
-                ref={imageRef}
-                onMouseDown={(e) => {
-                  setIsDrawing(true);
-                  const point = getRelativePointerPosition(e.target.getStage());
-                  const region = {
-                    id: crypto.randomUUID(),
-                    points: [point],
-                  };
-                  setRegions(regions.concat([region]));
-                  console.log("regions", regions);
-                }}
-                onMouseMove={(e) => {
-                  if (!isDrawing) {
-                    return;
-                  }
-                  const lastRegion = { ...regions[regions.length - 1] };
+    <div
+      className={
+        "h-screen flex flex-col bg-gradient-to-r from-slate-900 to-slate-700"
+      }
+    >
+      <div className={"h-20"}></div>
+      <div className={`grow grid grid-cols-12 gap-10 p-10`}>
+        <aside
+          className={
+            "col-span-3 border border-slate-700 rounded-xl p-5 shadow-[5px_5px_0_#000]"
+          }
+        >
+          <ColorSelector onChange={(color) => addBgColor(color)} />
+        </aside>
+        <main
+          className={
+            "flex flex-col gap-2 items-center justify-center col-span-6"
+          }
+        >
+          <Button size={"sm"} onClick={removeBg} className={"rounded-full"}>
+            <PhotoIcon className={"w-6 h-6 mr-2"}></PhotoIcon>
+            Remove background
+          </Button>
 
-                  const point = getRelativePointerPosition(e.target.getStage());
-                  lastRegion.points = lastRegion.points.concat([point]);
-                  regions.splice(regions.length - 1, 1);
-                  setRegions(regions.concat([lastRegion]));
-                }}
-                onMouseUp={(e) => {
-                  setIsDrawing(false);
-                  const lastRegion = regions[regions.length - 1];
+          <div className={"border-2 border-black rounded-3xl overflow-hidden"}>
+            <Stage width={600} height={400} ref={stageRef}>
+              <Layer ref={bgLayerRef}></Layer>
+              <Layer>
+                <Image
+                  image={image}
+                  x={imageProps.x}
+                  y={imageProps.y}
+                  width={imageProps.width}
+                  height={imageProps.height}
+                  ref={imageRef}
+                  onMouseDown={(e) => {
+                    setIsDrawing(true);
+                    const point = getRelativePointerPosition(
+                      e.target.getStage(),
+                    );
+                    const region = {
+                      id: crypto.randomUUID(),
+                      points: [point],
+                    };
+                    setRegions(regions.concat([region]));
+                    console.log("regions", regions);
+                  }}
+                  onMouseMove={(e) => {
+                    if (!isDrawing) {
+                      return;
+                    }
+                    const lastRegion = { ...regions[regions.length - 1] };
 
-                  if (lastRegion.points.length < 3) {
+                    const point = getRelativePointerPosition(
+                      e.target.getStage(),
+                    );
+                    lastRegion.points = lastRegion.points.concat([point]);
                     regions.splice(regions.length - 1, 1);
-                    setRegions(regions.concat());
-                  }
-                }}
-              ></Image>
-            </Layer>
-            <Layer>
-              {regions.map((region) => {
-                const isSelected = region.id === selectedId;
-                return (
-                  <React.Fragment key={region.id}>
-                    {/* first we need to erase previous drawings */}
-                    {/* we can do it with  destination-out blend mode */}
-                    <Line
-                      globalCompositeOperation="destination-out"
-                      points={region.points.flatMap((p) => [p.x, p.y])}
-                      fill="black"
-                      listening={false}
-                      closed
-                    />
-                    {/* then we just draw new region */}
-                    <Line
-                      name="region"
-                      fill={"#ff0e0e"}
-                      globalCompositeOperation={"source-over"}
-                      points={region.points.flatMap((p) => [p.x, p.y])}
-                      closed
-                      opacity={0.5}
-                    />
-                  </React.Fragment>
-                );
-              })}
-            </Layer>
-          </Stage>
-        </div>
-        <Input
-          ref={inputRef}
-          placeholder={"Enter prompt"}
-          onChange={(e) => setInputValue(e.target.value)}
-        />
-        <Button size={"sm"} onClick={undo}>
-          Undo
-        </Button>
-        <Button size={"sm"} onClick={removeBg}>
-          Remove background
-        </Button>
+                    setRegions(regions.concat([lastRegion]));
+                  }}
+                  onMouseUp={(e) => {
+                    setIsDrawing(false);
+                    const lastRegion = regions[regions.length - 1];
 
-        <ColorSelector onChange={(color) => addBgColor(color)} />
+                    if (lastRegion.points.length < 3) {
+                      regions.splice(regions.length - 1, 1);
+                      setRegions(regions.concat());
+                    }
+                  }}
+                ></Image>
+              </Layer>
+              <Layer>
+                {regions.map((region) => {
+                  return (
+                    <React.Fragment key={region.id}>
+                      {/* first we need to erase previous drawings */}
+                      {/* we can do it with  destination-out blend mode */}
+                      <Line
+                        globalCompositeOperation="destination-out"
+                        points={region.points.flatMap((p) => [p.x, p.y])}
+                        fill="black"
+                        listening={false}
+                        closed
+                      />
+                      {/* then we just draw new region */}
+                      <Line
+                        name="region"
+                        fill={"#ff0e0e"}
+                        globalCompositeOperation={"source-over"}
+                        points={region.points.flatMap((p) => [p.x, p.y])}
+                        closed
+                        opacity={0.5}
+                      />
+                    </React.Fragment>
+                  );
+                })}
+              </Layer>
+            </Stage>
+          </div>
+          <div className={"w-[500px]"}>
+            <Input
+              ref={inputRef}
+              placeholder={"Enter prompt"}
+              onChange={(e) => setInputValue(e.target.value)}
+            />
+          </div>
 
-        <Button size={"sm"} onClick={downloadImage}>
-          Download
-        </Button>
-        <Button isLoading={isLoading} onClick={handleExport}>
-          Generate
-        </Button>
-      </main>
+          <Button size={"sm"} onClick={undo}>
+            Undo
+          </Button>
+
+          <Button size={"sm"} onClick={downloadImage}>
+            Download
+          </Button>
+          <Button isLoading={isLoading} onClick={handleExport}>
+            Generate
+          </Button>
+        </main>
+        <aside className={"col-span-3"}></aside>
+      </div>
     </div>
   );
 };
