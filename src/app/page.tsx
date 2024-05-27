@@ -27,7 +27,7 @@ import {
 import { FeatureCard } from "@/components/feature-card";
 import { TransparentInput } from "@/components/ui/transparent-input";
 import { GlowingButton } from "@/components/ui/glowing-button";
-import { ArrowLeftCircle, ArrowUp } from "lucide-react";
+import { ArrowLeftCircle, ArrowUp, XIcon } from "lucide-react";
 
 function getRelativePointerPosition(node) {
   // the function will return pointer position relative to the passed node
@@ -522,89 +522,107 @@ export default function Home() {
                 "col-span-3 flex flex-col gap-4 overflow-y-auto max-h-full grow"
               }
             >
-              <FeatureCard title={"Remove backgound"}>
-                {history.length >= 1 && (
-                  <Button
-                    onClick={removeBg}
-                    variant={"rounded"}
-                    size={"sm"}
-                    isLoading={loadings?.removeBg}
-                  >
-                    <SparklesIcon className={"w-4 h-4 mr-2"} />
-                    Remove background
-                  </Button>
-                )}
-                {history.length < 1 && (
-                  <span className={"text-white/80 antialiased text-sm"}>
-                    Upload an image first
-                  </span>
-                )}
-              </FeatureCard>
-              <FeatureCard title={"AI Image"}>
-                <TransparentInput
-                  ref={genImageInputRef}
-                  placeholder={"Sangoku in the desert fighting Buu"}
-                  onChange={(e) => setGenImageINputValue(e.target.value)}
-                />
-                <Button
-                  isLoading={loadings?.generateImage}
-                  disabled={!genImageInputValue?.length}
-                  onClick={() => generateAiImage(genImageInputValue)}
-                  variant={"rounded"}
-                  size={"sm"}
-                  className={"mt-2"}
-                >
-                  <SparklesIcon className={"w-4 h-4 mr-2"} />
-                  Generate
-                </Button>
-              </FeatureCard>
-              <FeatureCard title={"AI Background"}>
-                <TransparentInput
-                  ref={genBgInputRef}
-                  placeholder={"Beautiful sunset in the mountains"}
-                  onChange={(e) => setGenBgInputValue(e.target.value)}
-                />
-                <Button
-                  isLoading={loadings?.generateBackground}
-                  disabled={!genBgInputValue?.length}
-                  onClick={() => generateAiBackground(genBgInputValue)}
-                  variant={"rounded"}
-                  size={"sm"}
-                  className={"mt-2"}
-                >
-                  <SparklesIcon className={"w-4 h-4 mr-2"} />
-                  Generate
-                </Button>
-              </FeatureCard>
-              <FeatureCard
-                title={"AI Replacement"}
-                redGlowing={!!regions.length}
-              >
-                {!regions.length && (
-                  <span className={"text-white/80 antialiased text-sm"}>
-                    Draw on your picture first
-                  </span>
-                )}
-                {!!regions.length && (
-                  <div>
+              {!regions?.length && (
+                <>
+                  <FeatureCard title={"Remove backgound"}>
+                    {history.length >= 1 && (
+                      <Button
+                        onClick={removeBg}
+                        variant={"rounded"}
+                        size={"sm"}
+                        isLoading={loadings?.removeBg}
+                      >
+                        <SparklesIcon className={"w-4 h-4 mr-2"} />
+                        Remove background
+                      </Button>
+                    )}
+                    {history.length < 1 && (
+                      <span className={"text-white/80 antialiased text-sm"}>
+                        Upload an image first
+                      </span>
+                    )}
+                  </FeatureCard>
+                  <FeatureCard title={"AI Image"}>
                     <TransparentInput
-                      ref={inputRef}
-                      placeholder={"A rat face"}
-                      onChange={(e) => setInputValue(e.target.value)}
+                      ref={genImageInputRef}
+                      placeholder={"Sangoku in the desert fighting Buu"}
+                      onChange={(e) => setGenImageINputValue(e.target.value)}
                     />
                     <Button
-                      isLoading={loadings?.generateReplacement}
-                      onClick={handleReplacement}
-                      variant={"feature"}
+                      isLoading={loadings?.generateImage}
+                      disabled={!genImageInputValue?.length}
+                      onClick={() => generateAiImage(genImageInputValue)}
+                      variant={"rounded"}
                       size={"sm"}
                       className={"mt-2"}
                     >
                       <SparklesIcon className={"w-4 h-4 mr-2"} />
                       Generate
                     </Button>
-                  </div>
-                )}
-              </FeatureCard>
+                  </FeatureCard>
+                  <FeatureCard title={"AI Background"}>
+                    <TransparentInput
+                      ref={genBgInputRef}
+                      placeholder={"Beautiful sunset in the mountains"}
+                      onChange={(e) => setGenBgInputValue(e.target.value)}
+                    />
+                    <Button
+                      isLoading={loadings?.generateBackground}
+                      disabled={!genBgInputValue?.length}
+                      onClick={() => generateAiBackground(genBgInputValue)}
+                      variant={"rounded"}
+                      size={"sm"}
+                      className={"mt-2"}
+                    >
+                      <SparklesIcon className={"w-4 h-4 mr-2"} />
+                      Generate
+                    </Button>
+                  </FeatureCard>
+                </>
+              )}
+
+              {!!regions.length && (
+                <>
+                  <FeatureCard
+                    title={"AI Replacement"}
+                    redGlowing={!!regions.length}
+                  >
+                    {!regions.length && (
+                      <span className={"text-white/80 antialiased text-sm"}>
+                        Draw on your picture first
+                      </span>
+                    )}
+                    {!!regions.length && (
+                      <div>
+                        <TransparentInput
+                          ref={inputRef}
+                          placeholder={"A rat face"}
+                          onChange={(e) => setInputValue(e.target.value)}
+                        />
+                        <Button
+                          isLoading={loadings?.generateReplacement}
+                          onClick={handleReplacement}
+                          variant={"feature"}
+                          size={"sm"}
+                          className={"mt-2 w-full"}
+                        >
+                          <SparklesIcon className={"w-4 h-4 mr-2"} />
+                          Generate
+                        </Button>
+                      </div>
+                    )}
+                  </FeatureCard>
+                  <Button
+                    onClick={() => resetRegions()}
+                    variant={"destructive"}
+                    size={"sm"}
+                    className={"mt-2"}
+                  >
+                    <XIcon className={"w-4 h-4 mr-1"} />
+                    Cancel
+                  </Button>
+                </>
+              )}
             </aside>
           </div>
         </div>
