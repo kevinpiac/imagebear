@@ -28,6 +28,7 @@ import { FeatureCard } from "@/components/feature-card";
 import { TransparentInput } from "@/components/ui/transparent-input";
 import { GlowingButton } from "@/components/ui/glowing-button";
 import { ArrowLeftCircle, ArrowUp, XIcon } from "lucide-react";
+import { UploadButton } from "@/components/ui/upload-button";
 
 function getRelativePointerPosition(node) {
   // the function will return pointer position relative to the passed node
@@ -347,13 +348,15 @@ export default function Home() {
     setLoadings({ ...loadings, generateImage: false });
   };
 
-  const downloadImage = async () => {
+  const handleExport = async () => {
+    setLoadings({ ...loadings, exporting: true });
     if (!history.length) {
       return;
     }
 
     const stageImage = await generateImageFromStage();
     download(stageImage!);
+    setLoadings({ ...loadings, exporting: false });
   };
 
   const download = (url: string) => {
@@ -380,23 +383,6 @@ export default function Home() {
   return (
     <div>
       <div className={`h-screen flex flex-col bg-black`}>
-        {isDragging && (
-          <div
-            className={
-              "bg-gray-[#0b0b0e]/90 fixed top-0 left-0 bottom-0 right-0 z-50 p-10"
-            }
-          >
-            <div
-              className={
-                "border-dashed border-4 border-black p-10 flex items-center justify-center h-full w-full rounded-2xl"
-              }
-            >
-              <h1 className={"text-4xl text-gray-800 font-bold"}>
-                Drop your file anywhere
-              </h1>
-            </div>
-          </div>
-        )}
         <Header />
         <div className={`grow p-4 flex overflow-hidden`}>
           <div
@@ -419,7 +405,10 @@ export default function Home() {
               }
             >
               <div className={"w-full items-center justify-center flex my-6"}>
-                <GlowingButton isLoading={loadings.exporting}>
+                <GlowingButton
+                  isLoading={loadings.exporting}
+                  onClick={handleExport}
+                >
                   Export
                 </GlowingButton>
               </div>
@@ -547,27 +536,14 @@ export default function Home() {
                         Generate with AI
                       </Button>
                     </FeatureCard>
-                    <div className={"flex items-center justify-center gap-3"}>
+                    <div
+                      className={"flex items-center justify-center gap-3 my-10"}
+                    >
                       <div className={"grow h-[1px] bg-gray-800"}></div>
                       <span className={"text-gray-800 antialiased"}>OR</span>
                       <div className={"grow h-[1px] bg-gray-800"}></div>
                     </div>
-                    <Dropzone
-                      onDrop={(acceptedFiles) => {}}
-                      onDragEnter={() => setIsDragging(true)}
-                      onDragLeave={() => setIsDragging(false)}
-                      onDropRejected={() => setIsDragging(false)}
-                      onDropAccepted={handleFileAdded}
-                    >
-                      {({ getRootProps, getInputProps }) => (
-                        <div {...getRootProps()}>
-                          <Button variant={"rounded"} className={"w-full"}>
-                            <ArrowUp className={"w-4 h-4 mr-2"} />
-                            Upload image
-                          </Button>
-                        </div>
-                      )}
-                    </Dropzone>
+                    <UploadButton onFileAdded={handleFileAdded} />
                   </div>
                   {/*<FeatureCard title={"AI Background"}>*/}
                   {/*  <TransparentInput*/}

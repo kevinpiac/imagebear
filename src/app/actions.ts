@@ -27,8 +27,8 @@ export async function generateBackgroundImage(prompt: string) {
   const formData = new FormData();
   formData.append("prompt", prompt);
   formData.append("model", "0001softrealistic_v187");
-  formData.append("width", "1024");
-  formData.append("height", "1024");
+  formData.append("width", "600");
+  formData.append("height", "400");
   formData.append("format", "png");
 
   try {
