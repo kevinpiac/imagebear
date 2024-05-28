@@ -19,10 +19,10 @@ export const fileToDataUrl = async (file: File): Promise<string> => {
 
 export const dataUrlToImageElement = async (
   url: string,
-): Promise<HTMLImageElement | null> => {
+): Promise<HTMLImageElement> => {
   return new Promise((resolve) => {
     if (!url) {
-      return null;
+      throw new Error("No url provided");
     }
     const img = document.createElement("img");
 
@@ -31,7 +31,7 @@ export const dataUrlToImageElement = async (
     }
 
     function onerror() {
-      resolve(null);
+      throw new Error("Failed to load image");
     }
 
     img.addEventListener("load", onload);
