@@ -21,6 +21,14 @@ import { TransparentInput } from "@/components/ui/transparent-input";
 import { GlowingButton } from "@/components/ui/glowing-button";
 import { XIcon } from "lucide-react";
 import { UploadButton } from "@/components/ui/upload-button";
+import {
+  LoginButton,
+  SignedIn,
+  SignedOut,
+  IsAllowed,
+  IsForbidden,
+  PricingLink,
+} from "@kobbleio/next/client";
 
 function getRelativePointerPosition(node: Konva.Stage) {
   // the function will return pointer position relative to the passed node
@@ -404,12 +412,21 @@ export default function CanvasEditor() {
               }
             >
               <div className={"w-full items-center justify-center flex my-6"}>
-                <GlowingButton
-                  isLoading={loadings.exporting}
-                  onClick={handleExport}
-                >
-                  Export
-                </GlowingButton>
+                <SignedIn>
+                  <GlowingButton
+                    isLoading={loadings.exporting}
+                    onClick={handleExport}
+                  >
+                    Export
+                  </GlowingButton>
+                </SignedIn>
+                <SignedOut>
+                  <LoginButton>
+                    <GlowingButton isLoading={loadings.exporting}>
+                      Sign in to generate images with AI
+                    </GlowingButton>
+                  </LoginButton>
+                </SignedOut>
               </div>
               <div
                 className={
@@ -489,125 +506,153 @@ export default function CanvasEditor() {
                 </Button>
               </div>
             </main>
-            <aside
-              className={
-                "col-span-3 flex flex-col gap-4 overflow-y-auto max-h-full grow"
-              }
-            >
-              {!!history?.length && (
-                <FeatureCard title={"Remove backgound"}>
-                  {history.length >= 1 && (
-                    <Button
-                      onClick={removeBg}
-                      variant={"rounded"}
-                      size={"sm"}
-                      isLoading={loadings?.removeBg}
-                    >
-                      <SparklesIcon className={"w-4 h-4 mr-2"} />
-                      Remove background
-                    </Button>
-                  )}
-                  {history.length < 1 && (
-                    <span className={"text-white/80 antialiased text-sm"}>
-                      Upload an image first
-                    </span>
-                  )}
-                </FeatureCard>
-              )}
-              {!regions?.length && (
-                <>
-                  <div className={"space-y-5"}>
-                    <FeatureCard title={"Add image"}>
-                      <TransparentInput
-                        ref={genImageInputRef}
-                        placeholder={"Elon musk drinking tea, in space"}
-                        onChange={(e) => setGenImageINputValue(e.target.value)}
-                      />
+            <IsAllowed quota={"image-generated"}>
+              <aside
+                className={
+                  "col-span-3 flex flex-col gap-4 overflow-y-auto max-h-full grow"
+                }
+              >
+                {!!history?.length && (
+                  <FeatureCard title={"Remove backgound"}>
+                    {history.length >= 1 && (
                       <Button
-                        isLoading={loadings?.generateImage}
-                        disabled={!genImageInputValue?.length}
-                        onClick={() => generateAiImage(genImageInputValue)}
+                        onClick={removeBg}
                         variant={"rounded"}
                         size={"sm"}
-                        className={"mt-2 w-full"}
+                        isLoading={loadings?.removeBg}
                       >
                         <SparklesIcon className={"w-4 h-4 mr-2"} />
-                        Generate with AI
+                        Remove background
                       </Button>
-                    </FeatureCard>
-                    <div
-                      className={"flex items-center justify-center gap-3 my-10"}
-                    >
-                      <div className={"grow h-[1px] bg-gray-800"}></div>
-                      <span className={"text-gray-800 antialiased"}>OR</span>
-                      <div className={"grow h-[1px] bg-gray-800"}></div>
-                    </div>
-                    <UploadButton onFileAdded={handleFileAdded} />
-                  </div>
-                  {/*<FeatureCard title={"AI Background"}>*/}
-                  {/*  <TransparentInput*/}
-                  {/*    ref={genBgInputRef}*/}
-                  {/*    placeholder={"Beautiful sunset in the mountains"}*/}
-                  {/*    onChange={(e) => setGenBgInputValue(e.target.value)}*/}
-                  {/*  />*/}
-                  {/*  <Button*/}
-                  {/*    isLoading={loadings?.generateBackground}*/}
-                  {/*    disabled={!genBgInputValue?.length}*/}
-                  {/*    onClick={() => generateAiBackground(genBgInputValue)}*/}
-                  {/*    variant={"rounded"}*/}
-                  {/*    size={"sm"}*/}
-                  {/*    className={"mt-2"}*/}
-                  {/*  >*/}
-                  {/*    <SparklesIcon className={"w-4 h-4 mr-2"} />*/}
-                  {/*    Generate*/}
-                  {/*  </Button>*/}
-                  {/*</FeatureCard>*/}
-                </>
-              )}
-
-              {!!regions.length && (
-                <>
-                  <FeatureCard
-                    title={"AI Replacement"}
-                    redGlowing={!!regions.length}
-                  >
-                    {!regions.length && (
+                    )}
+                    {history.length < 1 && (
                       <span className={"text-white/80 antialiased text-sm"}>
-                        Draw on your picture first
+                        Upload an image first
                       </span>
                     )}
-                    {!!regions.length && (
-                      <div>
+                  </FeatureCard>
+                )}
+                {!regions?.length && (
+                  <>
+                    <div className={"space-y-5"}>
+                      <FeatureCard title={"Add image"}>
                         <TransparentInput
-                          ref={inputRef}
-                          placeholder={"A rat face"}
-                          onChange={(e) => setInputValue(e.target.value)}
+                          ref={genImageInputRef}
+                          placeholder={"Elon musk drinking tea, in space"}
+                          onChange={(e) =>
+                            setGenImageINputValue(e.target.value)
+                          }
                         />
                         <Button
-                          isLoading={loadings?.generateReplacement}
-                          onClick={handleReplacement}
-                          variant={"feature"}
+                          isLoading={loadings?.generateImage}
+                          disabled={!genImageInputValue?.length}
+                          onClick={() => generateAiImage(genImageInputValue)}
+                          variant={"rounded"}
                           size={"sm"}
                           className={"mt-2 w-full"}
                         >
                           <SparklesIcon className={"w-4 h-4 mr-2"} />
-                          Generate
+                          Generate with AI
                         </Button>
+                      </FeatureCard>
+                      <div
+                        className={
+                          "flex items-center justify-center gap-3 my-10"
+                        }
+                      >
+                        <div className={"grow h-[1px] bg-gray-800"}></div>
+                        <span className={"text-gray-800 antialiased"}>OR</span>
+                        <div className={"grow h-[1px] bg-gray-800"}></div>
                       </div>
-                    )}
-                  </FeatureCard>
-                  <Button
-                    onClick={() => resetRegions()}
-                    variant={"destructive"}
-                    size={"sm"}
-                    className={"mt-2"}
-                  >
-                    <XIcon className={"w-4 h-4 mr-1"} />
-                    Cancel
-                  </Button>
-                </>
-              )}
-            </aside>
+                      <UploadButton onFileAdded={handleFileAdded} />
+                    </div>
+                    {/*<FeatureCard title={"AI Background"}>*/}
+                    {/*  <TransparentInput*/}
+                    {/*    ref={genBgInputRef}*/}
+                    {/*    placeholder={"Beautiful sunset in the mountains"}*/}
+                    {/*    onChange={(e) => setGenBgInputValue(e.target.value)}*/}
+                    {/*  />*/}
+                    {/*  <Button*/}
+                    {/*    isLoading={loadings?.generateBackground}*/}
+                    {/*    disabled={!genBgInputValue?.length}*/}
+                    {/*    onClick={() => generateAiBackground(genBgInputValue)}*/}
+                    {/*    variant={"rounded"}*/}
+                    {/*    size={"sm"}*/}
+                    {/*    className={"mt-2"}*/}
+                    {/*  >*/}
+                    {/*    <SparklesIcon className={"w-4 h-4 mr-2"} />*/}
+                    {/*    Generate*/}
+                    {/*  </Button>*/}
+                    {/*</FeatureCard>*/}
+                  </>
+                )}
+
+                {!!regions.length && (
+                  <>
+                    <FeatureCard
+                      title={"AI Replacement"}
+                      redGlowing={!!regions.length}
+                    >
+                      {!regions.length && (
+                        <span className={"text-white/80 antialiased text-sm"}>
+                          Draw on your picture first
+                        </span>
+                      )}
+                      {!!regions.length && (
+                        <div>
+                          <TransparentInput
+                            ref={inputRef}
+                            placeholder={"A rat face"}
+                            onChange={(e) => setInputValue(e.target.value)}
+                          />
+                          <Button
+                            isLoading={loadings?.generateReplacement}
+                            onClick={handleReplacement}
+                            variant={"feature"}
+                            size={"sm"}
+                            className={"mt-2 w-full"}
+                          >
+                            <SparklesIcon className={"w-4 h-4 mr-2"} />
+                            Generate
+                          </Button>
+                        </div>
+                      )}
+                    </FeatureCard>
+                    <Button
+                      onClick={() => resetRegions()}
+                      variant={"destructive"}
+                      size={"sm"}
+                      className={"mt-2"}
+                    >
+                      <XIcon className={"w-4 h-4 mr-1"} />
+                      Cancel
+                    </Button>
+                  </>
+                )}
+              </aside>
+            </IsAllowed>
+            <IsForbidden quota={"image-generated"}>
+              <aside
+                className={
+                  "col-span-3 flex flex-col gap-4 overflow-y-auto max-h-full grow text-white"
+                }
+              >
+                <div
+                  className={
+                    "p-5 rounded-xl border border-red-600 bg-red-500/30 text-red-300"
+                  }
+                >
+                  <span className={"antialiased"}>
+                    You have reached your AI image generation quota.{` `}
+                  </span>
+                  <PricingLink>
+                    <span className={"font-bold hover:underline"}>
+                      Upgrade to keep using the app.
+                    </span>
+                  </PricingLink>
+                </div>
+              </aside>
+            </IsForbidden>
           </div>
         </div>
       </div>

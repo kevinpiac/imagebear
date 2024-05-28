@@ -1,7 +1,8 @@
 "use server";
 
-import OpenAI from "openai";
 import axios from "axios";
+import { kobbleAdmin } from "@/lib/kobble-admin";
+import { getAuth } from "@kobbleio/next/server";
 
 function toArrayBuffer(buffer: Buffer) {
   const arrayBuffer = new ArrayBuffer(buffer.length);
@@ -24,6 +25,25 @@ const bufferToDataURL = (buffer: Buffer, mimeType = "image/png") => {
 };
 
 export async function generateBackgroundImage(prompt: string) {
+  const { session } = await getAuth();
+
+  if (!session) {
+    throw new Error("Not authenticated");
+  }
+
+  const userId = session.user.id;
+
+  const hasPermission = await kobbleAdmin.users.hasRemainingQuota(
+    userId,
+    "image-generated",
+  );
+
+  if (!hasPermission) {
+    throw new Error(
+      "You have reached the limit of generated images. Please upgrade your plan to generate more images.",
+    );
+  }
+
   const formData = new FormData();
   formData.append("prompt", prompt);
   formData.append("model", "0001softrealistic_v187");
@@ -46,6 +66,8 @@ export async function generateBackgroundImage(prompt: string) {
 
     const resultBuffer = Buffer.from(result.data, "binary");
 
+    await kobbleAdmin.users.incrementQuotaUsage(userId, "image-generated");
+
     const url = bufferToDataURL(resultBuffer);
     return url;
   } catch (e) {
@@ -59,6 +81,25 @@ export async function generateImage(
   maskUrl: string,
   prompt: string,
 ) {
+  const { session } = await getAuth();
+
+  if (!session) {
+    throw new Error("Not authenticated");
+  }
+
+  const userId = session.user.id;
+
+  const hasPermission = await kobbleAdmin.users.hasRemainingQuota(
+    userId,
+    "image-generated",
+  );
+
+  if (!hasPermission) {
+    throw new Error(
+      "You have reached the limit of generated images. Please upgrade your plan to generate more images.",
+    );
+  }
+
   // Convert DataURL to Blob
   const imageBlob = await dataURLToBlob(imageUrl);
   const maskBlob = await dataURLToBlob(maskUrl);
@@ -88,7 +129,9 @@ export async function generateImage(
     const resultBuffer = Buffer.from(result.data, "binary");
 
     const url = bufferToDataURL(resultBuffer);
-    console.log("url", url);
+
+    await kobbleAdmin.users.incrementQuotaUsage(userId, "image-generated");
+
     return url;
   } catch (e) {
     console.log(e);
@@ -97,10 +140,26 @@ export async function generateImage(
 }
 
 export async function removeBackground(imageUrl: string) {
-  // Convert DataURL to Blob
+  const { session } = await getAuth();
+
+  if (!session) {
+    throw new Error("Not authenticated");
+  }
+
+  const userId = session.user.id;
+
+  const hasPermission = await kobbleAdmin.users.hasRemainingQuota(
+    userId,
+    "image-generated",
+  );
+
+  if (!hasPermission) {
+    throw new Error(
+      "You have reached the limit of generated images. Please upgrade your plan to generate more images.",
+    );
+  }
   const imageBlob = await dataURLToBlob(imageUrl);
 
-  // Create a FormData object
   const formData = new FormData();
   formData.append("image", imageBlob, "init_image.png");
   formData.append("mode", "transparent");
@@ -121,7 +180,9 @@ export async function removeBackground(imageUrl: string) {
     const resultBuffer = Buffer.from(result.data, "binary");
 
     const url = bufferToDataURL(resultBuffer);
-    console.log("url", url);
+
+    await kobbleAdmin.users.incrementQuotaUsage(userId, "image-generated");
+
     return url;
   } catch (e) {
     console.log(e);
